@@ -1,66 +1,44 @@
 import React from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { AuthProvider, useAuth } from './contexts/AuthContext'
-import { DataProvider } from './contexts/DataContext'
+import { StoreProvider, useStore } from './lib/store'
 import BottomNav from './components/BottomNav'
+import Splash from './pages/Splash'
+import Login from './pages/Login'
+import Signup from './pages/Signup'
+import Dashboard from './pages/Dashboard'
+import FuelPage from './pages/FuelPage'
+import ServicePage from './pages/ServicePage'
+import AddQuick from './pages/AddQuick'
+import AddVehicle from './pages/AddVehicle'
+import AddFuel from './pages/AddFuel'
+import AddService from './pages/AddService'
+import AddTrip from './pages/AddTrip'
+import Profile from './pages/Profile'
 
-// Pages
-import SplashScreen from './pages/SplashScreen'
-import LoginScreen from './pages/LoginScreen'
-import SignupScreen from './pages/SignupScreen'
-import HomeScreen from './pages/HomeScreen'
-import VehicleListScreen from './pages/VehicleListScreen'
-import VehicleDetailScreen from './pages/VehicleDetailScreen'
-import AddVehicleScreen from './pages/AddVehicleScreen'
-import AddScreen from './pages/AddScreen'
-import AddFuelScreen from './pages/AddFuelScreen'
-import AddServiceScreen from './pages/AddServiceScreen'
-import AddTripScreen from './pages/AddTripScreen'
-import RemindersScreen from './pages/RemindersScreen'
-import ProfileScreen from './pages/ProfileScreen'
-import EditProfileScreen from './pages/EditProfileScreen'
-
-function ProtectedRoute({ children }) {
-  const { user, loading } = useAuth()
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-dark-bg flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 rounded-full border-2 border-accent border-t-transparent animate-spin" />
-          <span className="text-sm text-muted">Loading...</span>
-        </div>
-      </div>
-    )
-  }
+function Guard({ children }) {
+  const { user, authLoading } = useStore()
+  if (authLoading) return <div className="min-h-screen bg-[#0f172a] flex items-center justify-center"><div className="w-10 h-10 rounded-full border-2 border-[#f97316] border-t-transparent animate-spin"/></div>
   if (!user) return <Navigate to="/" replace />
   return children
 }
 
 function AppRoutes() {
-  const { user } = useAuth()
-
+  const { user } = useStore()
   return (
-    <div className="max-w-md mx-auto relative bg-dark-bg">
+    <div className="max-w-md mx-auto relative bg-[#0f172a]">
       <Routes>
-        {/* Public */}
-        <Route path="/" element={user ? <Navigate to="/home" replace /> : <SplashScreen />} />
-        <Route path="/login" element={<LoginScreen />} />
-        <Route path="/signup" element={<SignupScreen />} />
-
-        {/* Protected */}
-        <Route path="/home" element={<ProtectedRoute><HomeScreen /></ProtectedRoute>} />
-        <Route path="/vehicles" element={<ProtectedRoute><VehicleListScreen /></ProtectedRoute>} />
-        <Route path="/vehicle/:id" element={<ProtectedRoute><VehicleDetailScreen /></ProtectedRoute>} />
-        <Route path="/add-vehicle" element={<ProtectedRoute><AddVehicleScreen /></ProtectedRoute>} />
-        <Route path="/add" element={<ProtectedRoute><AddScreen /></ProtectedRoute>} />
-        <Route path="/add-fuel" element={<ProtectedRoute><AddFuelScreen /></ProtectedRoute>} />
-        <Route path="/add-service" element={<ProtectedRoute><AddServiceScreen /></ProtectedRoute>} />
-        <Route path="/add-trip" element={<ProtectedRoute><AddTripScreen /></ProtectedRoute>} />
-        <Route path="/reminders" element={<ProtectedRoute><RemindersScreen /></ProtectedRoute>} />
-        <Route path="/profile" element={<ProtectedRoute><ProfileScreen /></ProtectedRoute>} />
-        <Route path="/edit-profile" element={<ProtectedRoute><EditProfileScreen /></ProtectedRoute>} />
-
-        {/* Fallback */}
+        <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <Splash />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/dashboard" element={<Guard><Dashboard /></Guard>} />
+        <Route path="/fuel" element={<Guard><FuelPage /></Guard>} />
+        <Route path="/service" element={<Guard><ServicePage /></Guard>} />
+        <Route path="/add" element={<Guard><AddQuick /></Guard>} />
+        <Route path="/add-vehicle" element={<Guard><AddVehicle /></Guard>} />
+        <Route path="/add-fuel" element={<Guard><AddFuel /></Guard>} />
+        <Route path="/add-service" element={<Guard><AddService /></Guard>} />
+        <Route path="/add-trip" element={<Guard><AddTrip /></Guard>} />
+        <Route path="/profile" element={<Guard><Profile /></Guard>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <BottomNav />
@@ -69,13 +47,5 @@ function AppRoutes() {
 }
 
 export default function App() {
-  return (
-    <BrowserRouter>
-      <AuthProvider>
-        <DataProvider>
-          <AppRoutes />
-        </DataProvider>
-      </AuthProvider>
-    </BrowserRouter>
-  )
+  return <BrowserRouter><StoreProvider><AppRoutes /></StoreProvider></BrowserRouter>
 }

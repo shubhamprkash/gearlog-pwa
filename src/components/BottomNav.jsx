@@ -1,59 +1,39 @@
 import React from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Home, Car, Plus, Bell, User } from 'lucide-react'
+import { LayoutDashboard, Fuel, Plus, Wrench, User } from 'lucide-react'
 
 const tabs = [
-  { path: '/home', icon: Home, label: 'Home' },
-  { path: '/vehicles', icon: Car, label: 'Vehicles' },
-  { path: '/add', icon: Plus, label: 'Add', isFab: true },
-  { path: '/reminders', icon: Bell, label: 'Reminders' },
+  { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { path: '/fuel', icon: Fuel, label: 'Fuel' },
+  { path: '/add', icon: Plus, label: '', fab: true },
+  { path: '/service', icon: Wrench, label: 'Service' },
   { path: '/profile', icon: User, label: 'Profile' },
 ]
 
-// Hide bottom nav on these screens (auth, splash, fullscreen overlays)
-const hiddenPaths = [
-  '/', '/login', '/signup', '/onboarding',
-  '/add-vehicle', '/add-fuel', '/add-service', '/add-trip',
-  '/edit-profile',
-]
+const hidePaths = ['/', '/login', '/signup', '/add-vehicle', '/add-fuel', '/add-service', '/add-trip', '/edit-profile']
 
 export default function BottomNav() {
-  const navigate = useNavigate()
-  const location = useLocation()
-
-  // Hide on auth/splash/fullscreen-form screens
-  const shouldHide = hiddenPaths.some(p => location.pathname === p)
-  if (shouldHide) return null
+  const nav = useNavigate()
+  const loc = useLocation()
+  if (hidePaths.some(p => loc.pathname === p)) return null
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-dark-bg/95 backdrop-blur-xl border-t border-dark-border">
-      <div className="max-w-md mx-auto flex items-center justify-around px-2 h-16 pb-safe">
-        {tabs.map(tab => {
-          const isActive = location.pathname.startsWith(tab.path)
-          const Icon = tab.icon
-
-          if (tab.isFab) {
-            return (
-              <button
-                key={tab.path}
-                onClick={() => navigate('/add')}
-                className="relative -mt-6 w-14 h-14 rounded-full bg-accent flex items-center justify-center shadow-lg shadow-accent/30 fab-pulse active:scale-95 transition-transform"
-              >
-                <Plus className="w-7 h-7 text-white" strokeWidth={2.5} />
-              </button>
-            )
-          }
-
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#0f172a]/95 backdrop-blur-xl border-t border-[#334155]">
+      <div className="max-w-md mx-auto flex items-center justify-around h-16" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+        {tabs.map(t => {
+          const active = loc.pathname.startsWith(t.path)
+          if (t.fab) return (
+            <button key="fab" onClick={() => nav('/add')}
+              className="relative -mt-5 w-13 h-13 rounded-full bg-[#f97316] flex items-center justify-center shadow-lg shadow-[#f97316]/30 pulse-ring active:scale-90 transition"
+              style={{ width: 52, height: 52 }}>
+              <Plus className="w-6 h-6 text-white" strokeWidth={2.5} />
+            </button>
+          )
           return (
-            <button
-              key={tab.path}
-              onClick={() => navigate(tab.path)}
-              className={`flex flex-col items-center gap-0.5 py-1 px-3 transition-colors ${
-                isActive ? 'text-accent' : 'text-muted'
-              }`}
-            >
-              <Icon className="w-5 h-5" strokeWidth={isActive ? 2.5 : 2} />
-              <span className="text-[10px] font-medium">{tab.label}</span>
+            <button key={t.path} onClick={() => nav(t.path)}
+              className={`flex flex-col items-center gap-0.5 px-3 py-1 transition ${active ? 'text-[#f97316]' : 'text-[#64748b]'}`}>
+              <t.icon className="w-5 h-5" strokeWidth={active ? 2.5 : 2} />
+              <span className="text-[9px] font-medium">{t.label}</span>
             </button>
           )
         })}
