@@ -40,8 +40,12 @@ export default function ProfileScreen() {
       {/* User Info */}
       <div className="px-5 mb-6">
         <div className="bg-dark-card rounded-2xl border border-dark-border p-5 flex items-center gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-accent/10 border-2 border-accent/30 flex items-center justify-center">
-            <User className="w-8 h-8 text-accent" />
+          <div className="w-16 h-16 rounded-2xl bg-accent/10 border-2 border-accent/30 flex items-center justify-center overflow-hidden">
+            {profile?.avatar_url ? (
+              <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+            ) : (
+              <User className="w-8 h-8 text-accent" />
+            )}
           </div>
           <div className="flex-1">
             <h2 className="text-lg font-bold text-primary">{profile?.full_name || 'User'}</h2>
@@ -50,7 +54,10 @@ export default function ProfileScreen() {
               {user?.email || 'demo@gearlog.app'}
             </p>
           </div>
-          <button className="w-9 h-9 rounded-xl bg-dark-bg border border-dark-border flex items-center justify-center">
+          <button
+            onClick={() => navigate('/edit-profile')}
+            className="w-9 h-9 rounded-xl bg-dark-bg border border-dark-border flex items-center justify-center active:scale-95 transition-transform"
+          >
             <Edit className="w-4 h-4 text-muted" />
           </button>
         </div>
@@ -77,13 +84,13 @@ export default function ProfileScreen() {
               <div className="flex gap-2">
                 <button
                   onClick={() => navigate(`/vehicle/${v.id}`)}
-                  className="w-8 h-8 rounded-lg bg-dark-bg border border-dark-border flex items-center justify-center"
+                  className="w-8 h-8 rounded-lg bg-dark-bg border border-dark-border flex items-center justify-center active:scale-95 transition-transform"
                 >
                   <Edit className="w-3.5 h-3.5 text-muted" />
                 </button>
                 <button
                   onClick={() => handleDelete(v.id)}
-                  className="w-8 h-8 rounded-lg bg-danger/10 border border-danger/20 flex items-center justify-center"
+                  className="w-8 h-8 rounded-lg bg-danger/10 border border-danger/20 flex items-center justify-center active:scale-95 transition-transform"
                 >
                   <Trash2 className="w-3.5 h-3.5 text-danger" />
                 </button>
@@ -93,7 +100,7 @@ export default function ProfileScreen() {
           {vehicles.length < 4 && (
             <button
               onClick={() => navigate('/add-vehicle')}
-              className="w-full bg-dark-card/50 rounded-2xl border-2 border-dashed border-dark-border p-3 flex items-center justify-center gap-2 text-muted text-sm font-medium hover:border-accent/30 hover:text-accent transition-colors"
+              className="w-full bg-dark-card/50 rounded-2xl border-2 border-dashed border-dark-border p-3 flex items-center justify-center gap-2 text-muted text-sm font-medium hover:border-accent/30 hover:text-accent transition-colors active:scale-[0.98]"
             >
               + Add Vehicle
             </button>
@@ -153,13 +160,13 @@ export default function ProfileScreen() {
             <div className="flex gap-3">
               <button
                 onClick={() => setShowLogout(false)}
-                className="flex-1 py-3 bg-dark-bg border border-dark-border rounded-xl text-sm font-semibold text-primary"
+                className="flex-1 py-3 bg-dark-bg border border-dark-border rounded-xl text-sm font-semibold text-primary active:scale-[0.98] transition-transform"
               >
                 Cancel
               </button>
               <button
                 onClick={handleLogout}
-                className="flex-1 py-3 bg-danger text-white rounded-xl text-sm font-semibold"
+                className="flex-1 py-3 bg-danger text-white rounded-xl text-sm font-semibold active:scale-[0.98] transition-transform"
               >
                 Logout
               </button>

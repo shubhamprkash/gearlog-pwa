@@ -10,13 +10,20 @@ const tabs = [
   { path: '/profile', icon: User, label: 'Profile' },
 ]
 
+// Hide bottom nav on these screens (auth, splash, fullscreen overlays)
+const hiddenPaths = [
+  '/', '/login', '/signup', '/onboarding',
+  '/add-vehicle', '/add-fuel', '/add-service', '/add-trip',
+  '/edit-profile',
+]
+
 export default function BottomNav() {
   const navigate = useNavigate()
   const location = useLocation()
 
-  // Hide nav on auth/splash screens
-  const hiddenPaths = ['/', '/login', '/signup', '/onboarding']
-  if (hiddenPaths.includes(location.pathname)) return null
+  // Hide on auth/splash/fullscreen-form screens
+  const shouldHide = hiddenPaths.some(p => location.pathname === p)
+  if (shouldHide) return null
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-dark-bg/95 backdrop-blur-xl border-t border-dark-border">

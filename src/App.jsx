@@ -18,6 +18,7 @@ import AddServiceScreen from './pages/AddServiceScreen'
 import AddTripScreen from './pages/AddTripScreen'
 import RemindersScreen from './pages/RemindersScreen'
 import ProfileScreen from './pages/ProfileScreen'
+import EditProfileScreen from './pages/EditProfileScreen'
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -57,6 +58,7 @@ function AppRoutes() {
         <Route path="/add-trip" element={<ProtectedRoute><AddTripScreen /></ProtectedRoute>} />
         <Route path="/reminders" element={<ProtectedRoute><RemindersScreen /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><ProfileScreen /></ProtectedRoute>} />
+        <Route path="/edit-profile" element={<ProtectedRoute><EditProfileScreen /></ProtectedRoute>} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

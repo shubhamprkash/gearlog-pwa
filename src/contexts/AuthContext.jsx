@@ -43,12 +43,30 @@ export function AuthProvider({ children }) {
   }
 
   async function fetchProfile(userId) {
+    // If demo mode, just refresh from current profile state
+    if (isDemo) return
+
     try {
       const { data } = await supabase.from('profiles').select('*').eq('id', userId).single()
       if (data) setProfile(data)
     } catch (e) {
       console.log('Profile fetch failed')
     }
+  }
+
+  async function updateProfile(updates) {
+    if (isDemo) {
+      // Demo mode — merge updates into local profile
+      setProfile(prev => ({ ...prev, ...updates }))
+      return
+    }
+    const { error } = await supabase
+      .from('profiles')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', user.id)
+    if (error) throw error
+    // Refresh
+    setProfile(prev => ({ ...prev, ...updates }))
   }
 
   async function signUp(email, password, fullName) {
@@ -89,7 +107,13 @@ export function AuthProvider({ children }) {
 
   function loginAsDemo() {
     setUser(demoUser)
-    setProfile({ full_name: demoUser.full_name, notify_service: true, notify_expiry: true, notify_daily_summary: false })
+    setProfile({
+      full_name: demoUser.full_name,
+      avatar_url: null,
+      notify_service: true,
+      notify_expiry: true,
+      notify_daily_summary: false,
+    })
     setIsDemo(true)
   }
 
@@ -103,7 +127,8 @@ export function AuthProvider({ children }) {
   return (
     <AuthContext.Provider value={{
       user, profile, loading, isDemo,
-      signUp, signIn, signInWithGoogle, signOut, loginAsDemo, resetPassword, fetchProfile
+      signUp, signIn, signInWithGoogle, signOut, loginAsDemo,
+      resetPassword, fetchProfile, updateProfile
     }}>
       {children}
     </AuthContext.Provider>
