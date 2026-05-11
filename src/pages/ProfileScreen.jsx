@@ -148,7 +148,7 @@ export default function ProfileScreen() {
           <LogOut className="w-4 h-4" />
           Logout
         </button>
-        <p className="text-center text-[10px] text-muted/50 mt-4">© 2024 GearSystems Global</p>
+        <p className="text-center text-[10px] text-muted/50 mt-4">© 2026 Shubham Web Studios (SWS) </p>
       </div>
 
       {/* Logout Confirmation Modal */}
