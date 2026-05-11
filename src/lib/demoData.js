@@ -1,0 +1,121 @@
+// Demo data for the app when not connected to Supabase
+export const demoUser = {
+  id: 'demo-user-1',
+  email: 'alex.rivera@geardrive.com',
+  full_name: 'Alex Rivera',
+}
+
+export const demoVehicles = [
+  {
+    id: 'v1',
+    user_id: 'demo-user-1',
+    nickname: 'Interceptor 650',
+    type: 'bike',
+    make: 'Royal Enfield',
+    model: 'Interceptor 650',
+    year: 2023,
+    fuel_type: 'petrol',
+    condition: 'new',
+    current_odometer: 12450,
+    estimated_mileage: 28,
+    last_oil_change_date: '2024-07-15',
+    last_oil_change_km: 11950,
+    oil_brand: 'Motul',
+    oil_grade: '10W-40',
+    oil_interval_km: 5000,
+    oil_interval_months: 6,
+    last_service_date: '2024-06-20',
+    last_service_km: 11250,
+    last_service_type: 'general',
+    service_interval_km: 10000,
+    service_interval_months: 12,
+    workshop_name: 'RE Service Center',
+    insurance_expiry: '2024-10-12',
+    puc_expiry: '2024-08-05',
+    battery_date: '2023-01-15',
+    air_filter_km: 10000,
+    chain_km: 8000,
+    brake_pads_km: 9000,
+    tyres_km: 5000,
+    remind_before_service_km: 500,
+    remind_before_expiry_days: 30,
+    health: 98,
+  },
+  {
+    id: 'v2',
+    user_id: 'demo-user-1',
+    nickname: 'Terra Rover',
+    type: 'car',
+    make: 'Land Rover',
+    model: 'Defender',
+    year: 2022,
+    fuel_type: 'diesel',
+    condition: 'used',
+    current_odometer: 45892,
+    estimated_mileage: 14,
+    last_oil_change_date: '2024-05-10',
+    last_oil_change_km: 43000,
+    oil_brand: 'Castrol',
+    oil_grade: '5W-30',
+    oil_interval_km: 10000,
+    oil_interval_months: 12,
+    last_service_date: '2024-05-10',
+    last_service_km: 43000,
+    last_service_type: 'major',
+    service_interval_km: 15000,
+    service_interval_months: 12,
+    workshop_name: 'Land Rover Authorized',
+    insurance_expiry: '2024-10-24',
+    puc_expiry: '2025-03-15',
+    battery_date: '2022-06-01',
+    air_filter_km: 40000,
+    brake_pads_km: 35000,
+    tyres_km: 30000,
+    remind_before_service_km: 500,
+    remind_before_expiry_days: 30,
+    health: 62,
+  },
+]
+
+export const demoFuelLogs = [
+  { id: 'f1', vehicle_id: 'v1', date: '2024-10-21', odometer: 12450, litres: 12, total_cost: 1250, full_tank: true, station_name: 'HP Fuel Station', mileage: 28.5, notes: '' },
+  { id: 'f2', vehicle_id: 'v1', date: '2024-10-14', odometer: 12108, litres: 11.5, total_cost: 1196, full_tank: true, station_name: 'Indian Oil', mileage: 29.2, notes: '' },
+  { id: 'f3', vehicle_id: 'v1', date: '2024-10-07', odometer: 11772, litres: 13, total_cost: 1352, full_tank: true, station_name: 'HP Fuel Station', mileage: 26.1, notes: '' },
+  { id: 'f4', vehicle_id: 'v1', date: '2024-09-30', odometer: 11432, litres: 10.5, total_cost: 1092, full_tank: true, station_name: 'BPCL', mileage: 32.4, notes: '' },
+  { id: 'f5', vehicle_id: 'v1', date: '2024-09-22', odometer: 11092, litres: 12, total_cost: 1248, full_tank: true, station_name: 'HP Fuel Station', mileage: 27.0, notes: '' },
+  { id: 'f6', vehicle_id: 'v1', date: '2024-09-14', odometer: 10768, litres: 11, total_cost: 1144, full_tank: true, station_name: 'Indian Oil', mileage: 30.2, notes: '' },
+  { id: 'f7', vehicle_id: 'v2', date: '2024-10-17', odometer: 45892, litres: 55, total_cost: 4950, full_tank: true, station_name: 'Shell', mileage: 14.2, notes: '' },
+  { id: 'f8', vehicle_id: 'v2', date: '2024-10-08', odometer: 45110, litres: 52, total_cost: 4680, full_tank: true, station_name: 'HP Fuel Station', mileage: 13.8, notes: '' },
+]
+
+export const demoServiceLogs = [
+  { id: 's1', vehicle_id: 'v1', date: '2024-07-15', odometer: 11950, service_type: 'oil_change', parts_changed: ['Oil Filter', 'Engine Oil'], oil_brand: 'Motul', oil_grade: '10W-40', total_cost: 1800, workshop_name: 'RE Service Center', notes: '' },
+  { id: 's2', vehicle_id: 'v1', date: '2024-06-20', odometer: 11250, service_type: 'general', parts_changed: ['Air Filter', 'Spark Plugs'], total_cost: 3500, workshop_name: 'RE Service Center', notes: 'Regular service' },
+  { id: 's3', vehicle_id: 'v1', date: '2024-03-10', odometer: 8500, service_type: 'general', parts_changed: ['Chain Set', 'Brake Pads'], total_cost: 4200, workshop_name: 'RE Service Center', notes: '' },
+  { id: 's4', vehicle_id: 'v2', date: '2024-05-10', odometer: 43000, service_type: 'major', parts_changed: ['Oil Filter', 'Air Filter', 'Brake Fluid', 'Cabin Filter'], oil_brand: 'Castrol', oil_grade: '5W-30', total_cost: 18500, workshop_name: 'Land Rover Authorized', notes: 'Major 40k service' },
+]
+
+export const demoTrips = [
+  { id: 't1', vehicle_id: 'v2', date: '2024-10-20', from_location: 'Mumbai', to_location: 'Lonavala', start_km: 45850, end_km: 45892, distance: 42, purpose: 'travel', notes: 'Weekend getaway' },
+  { id: 't2', vehicle_id: 'v1', date: '2024-10-18', from_location: 'Home', to_location: 'Office', start_km: 12410, end_km: 12435, distance: 25, purpose: 'work', notes: '' },
+  { id: 't3', vehicle_id: 'v1', date: '2024-10-15', from_location: 'Home', to_location: 'Market', start_km: 12390, end_km: 12398, distance: 8, purpose: 'personal', notes: '' },
+]
+
+export const demoReminders = [
+  { id: 'r1', vehicle_id: 'v1', type: 'insurance', title: 'Insurance Expiry', due_date: '2024-10-24', status: 'active', urgency: 'overdue' },
+  { id: 'r2', vehicle_id: 'v1', type: 'oil_change', title: 'Oil Change Service', due_km: 16950, status: 'active', urgency: 'soon' },
+  { id: 'r3', vehicle_id: 'v2', type: 'service', title: 'Major Service Due', due_km: 53000, status: 'active', urgency: 'ok' },
+  { id: 'r4', vehicle_id: 'v2', type: 'tyre', title: 'Tire Rotation', due_date: '2024-12-12', status: 'active', urgency: 'ok' },
+  { id: 'r5', vehicle_id: 'v1', type: 'puc', title: 'PUC Certificate Renewal', due_date: '2024-08-05', status: 'active', urgency: 'overdue' },
+  { id: 'r6', vehicle_id: 'v1', type: 'brake', title: 'Brake Fluid Flush', due_km: 12900, due_date: '2024-10-24', status: 'active', urgency: 'soon' },
+  { id: 'r7', vehicle_id: 'v2', type: 'oil_change', title: 'Engine Oil Change', due_km: 53000, status: 'completed', urgency: 'ok' },
+  { id: 'r8', vehicle_id: 'v1', type: 'chain', title: 'Chain Lubrication', due_km: 13000, status: 'dismissed', urgency: 'ok' },
+]
+
+export const demoRecentActivity = [
+  { id: 'a1', type: 'fuel', vehicle: 'Interceptor 650', vehicleType: 'bike', date: '2024-10-21', detail: '-₹1,250', icon: 'fuel' },
+  { id: 'a2', type: 'trip', vehicle: 'Terra Rover', vehicleType: 'car', date: '2024-10-20', detail: '42.8 km', icon: 'trip', tripName: 'Coast Run' },
+  { id: 'a3', type: 'service', vehicle: 'Interceptor 650', vehicleType: 'bike', date: '2024-10-18', detail: '-₹1,100', icon: 'service', serviceName: 'Brake Check' },
+  { id: 'a4', type: 'fuel', vehicle: 'Terra Rover', vehicleType: 'car', date: '2024-10-17', detail: '-₹4,950', icon: 'fuel' },
+  { id: 'a5', type: 'service', vehicle: 'Interceptor 650', vehicleType: 'bike', date: '2024-10-15', detail: '-₹450', icon: 'service', serviceName: 'Detailing' },
+]
