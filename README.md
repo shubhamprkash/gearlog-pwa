@@ -178,4 +178,4 @@ gearlog-pwa/
 
 ## 📜 License
 
-MIT © 2024 GearSystems Global
+MIT © 2026 GearSystems Global
