@@ -40,9 +40,8 @@ function AppRoutes() {
   const { user } = useAuth()
 
   return (
-    <div className="max-w-md mx-auto min-h-screen relative bg-dark-bg flex flex-col overflow-y-auto">
-      <div className="flex-1 overflow-y-auto">
-        <Routes>
+    <div className="max-w-md mx-auto relative bg-dark-bg">
+      <Routes>
         {/* Public */}
         <Route path="/" element={user ? <Navigate to="/home" replace /> : <SplashScreen />} />
         <Route path="/login" element={<LoginScreen />} />
@@ -63,8 +62,7 @@ function AppRoutes() {
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </div>
+      </Routes>
       <BottomNav />
     </div>
   )

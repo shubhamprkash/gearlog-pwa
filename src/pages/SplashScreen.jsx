@@ -14,9 +14,9 @@ export default function SplashScreen() {
   }, [user])
 
   return (
-    <div className="min-h-screen bg-dark-bg flex flex-col items-center justify-center px-8 relative overflow-hidden">
+    <div className="min-h-screen bg-dark-bg flex flex-col items-center justify-center px-8 relative">
       {/* Background decorative elements */}
-      <div className="absolute inset-0 overflow-hidden">
+      <div className="absolute inset-0 pointer-events-none">
         <div className="absolute -top-32 -right-32 w-64 h-64 bg-accent/5 rounded-full blur-3xl" />
         <div className="absolute -bottom-32 -left-32 w-64 h-64 bg-accent/5 rounded-full blur-3xl" />
         {/* Subtle grid */}

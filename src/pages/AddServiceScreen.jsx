@@ -65,10 +65,11 @@ export default function AddServiceScreen() {
   }
 
   return (
-    <div className="min-h-screen bg-dark-bg flex flex-col">
-      <div className="px-5 pt-5 pb-3 border-b border-dark-border">
+    <div className="fixed inset-0 bg-dark-bg flex flex-col max-w-md mx-auto">
+      {/* Header */}
+      <div className="flex-shrink-0 px-5 pt-5 pb-3 border-b border-dark-border bg-dark-bg z-10">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate(-1)} className="w-9 h-9 rounded-xl bg-dark-card border border-dark-border flex items-center justify-center">
+          <button type="button" onClick={() => navigate(-1)} className="w-9 h-9 rounded-xl bg-dark-card border border-dark-border flex items-center justify-center">
             <ArrowLeft className="w-4 h-4 text-primary" />
           </button>
           <div>
@@ -78,76 +79,81 @@ export default function AddServiceScreen() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-5 py-5 space-y-4">
-        {!preselectedVehicleId && (
+      {/* Scrollable Content */}
+      <div className="flex-1 overflow-y-auto min-h-0">
+        <div className="px-5 py-5 space-y-4">
+          {!preselectedVehicleId && (
+            <div className="space-y-1.5">
+              <label className="text-caps text-muted">Vehicle</label>
+              <div className="relative">
+                <select
+                  value={vehicleId}
+                  onChange={e => setVehicleId(e.target.value)}
+                  className="w-full bg-dark-card border border-dark-border rounded-xl px-4 py-3 text-primary text-sm appearance-none focus:outline-none focus:border-accent/50"
+                >
+                  <option value="">Select vehicle</option>
+                  {vehicles.map(v => (
+                    <option key={v.id} value={v.id}>{v.nickname}</option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
+              </div>
+            </div>
+          )}
+
+          <FormInput label="Service Date" value={date} onChange={setDate} type="date" icon={Calendar} />
+          <FormInput label="Current Odometer (KM)" value={odometer} onChange={setOdometer} type="number" suffix="KM" icon={Gauge} />
+
+          {/* Service Type */}
           <div className="space-y-1.5">
-            <label className="text-caps text-muted">Vehicle</label>
-            <div className="relative">
-              <select
-                value={vehicleId}
-                onChange={e => setVehicleId(e.target.value)}
-                className="w-full bg-dark-card border border-dark-border rounded-xl px-4 py-3 text-primary text-sm appearance-none focus:outline-none focus:border-accent/50"
-              >
-                <option value="">Select vehicle</option>
-                {vehicles.map(v => (
-                  <option key={v.id} value={v.id}>{v.nickname}</option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
+            <label className="text-caps text-muted">Service Type</label>
+            <div className="flex gap-1 bg-dark-bg rounded-xl p-1 border border-dark-border flex-wrap">
+              {serviceTypes.map(st => (
+                <button
+                  key={st.value}
+                  type="button"
+                  onClick={() => setServiceType(st.value)}
+                  className={`flex-1 py-2 px-2 rounded-lg text-[10px] font-semibold transition-all min-w-fit ${
+                    serviceType === st.value
+                      ? 'bg-accent text-white shadow-md'
+                      : 'text-muted hover:text-primary'
+                  }`}
+                >
+                  {st.label}
+                </button>
+              ))}
             </div>
           </div>
-        )}
 
-        <FormInput label="Service Date" value={date} onChange={setDate} type="date" icon={Calendar} />
-        <FormInput label="Current Odometer (KM)" value={odometer} onChange={setOdometer} type="number" suffix="KM" icon={Gauge} />
+          {/* Oil brand & grade (only if oil change) */}
+          {serviceType === 'oil_change' && (
+            <div className="grid grid-cols-2 gap-3">
+              <FormInput label="Oil Brand" value={oilBrand} onChange={setOilBrand} placeholder="e.g. Motul" />
+              <FormInput label="Oil Grade" value={oilGrade} onChange={setOilGrade} placeholder="e.g. 10W-40" />
+            </div>
+          )}
 
-        {/* Service Type */}
-        <div className="space-y-1.5">
-          <label className="text-caps text-muted">Service Type</label>
-          <div className="flex gap-1 bg-dark-bg rounded-xl p-1 border border-dark-border flex-wrap">
-            {serviceTypes.map(st => (
-              <button
-                key={st.value}
-                type="button"
-                onClick={() => setServiceType(st.value)}
-                className={`flex-1 py-2 px-2 rounded-lg text-[10px] font-semibold transition-all min-w-fit ${
-                  serviceType === st.value
-                    ? 'bg-accent text-white shadow-md'
-                    : 'text-muted hover:text-primary'
-                }`}
-              >
-                {st.label}
-              </button>
-            ))}
+          <FormChipSelect label="Parts Changed" options={partsOptions} selected={partsChanged} onChange={setPartsChanged} />
+
+          <FormInput label="Workshop / Service Center" value={workshopName} onChange={setWorkshopName} placeholder="Workshop name" icon={Wrench} />
+          <FormInput label="Total Cost ($)" value={totalCost} onChange={setTotalCost} type="number" placeholder="Amount" icon={DollarSign} />
+
+          <div className="bg-dark-card rounded-2xl border border-dark-border p-4 space-y-3">
+            <h4 className="text-caps text-muted">Next Recommended Service</h4>
+            <div className="grid grid-cols-2 gap-3">
+              <FormInput label="Due Date" value={nextServiceDate} onChange={setNextServiceDate} type="date" />
+              <FormInput label="Due KM" value={nextServiceKm} onChange={setNextServiceKm} type="number" suffix="KM" />
+            </div>
           </div>
+
+          <FormTextarea label="Service Notes" value={notes} onChange={setNotes} placeholder="Any notes about this service..." />
         </div>
-
-        {/* Oil brand & grade (only if oil change) */}
-        {serviceType === 'oil_change' && (
-          <div className="grid grid-cols-2 gap-3">
-            <FormInput label="Oil Brand" value={oilBrand} onChange={setOilBrand} placeholder="e.g. Motul" />
-            <FormInput label="Oil Grade" value={oilGrade} onChange={setOilGrade} placeholder="e.g. 10W-40" />
-          </div>
-        )}
-
-        <FormChipSelect label="Parts Changed" options={partsOptions} selected={partsChanged} onChange={setPartsChanged} />
-
-        <FormInput label="Workshop / Service Center" value={workshopName} onChange={setWorkshopName} placeholder="Workshop name" icon={Wrench} />
-        <FormInput label="Total Cost ($)" value={totalCost} onChange={setTotalCost} type="number" placeholder="Amount" icon={DollarSign} />
-
-        <div className="bg-dark-card rounded-2xl border border-dark-border p-4 space-y-3">
-          <h4 className="text-caps text-muted">Next Recommended Service</h4>
-          <div className="grid grid-cols-2 gap-3">
-            <FormInput label="Due Date" value={nextServiceDate} onChange={setNextServiceDate} type="date" />
-            <FormInput label="Due KM" value={nextServiceKm} onChange={setNextServiceKm} type="number" suffix="KM" />
-          </div>
-        </div>
-
-        <FormTextarea label="Service Notes" value={notes} onChange={setNotes} placeholder="Any notes about this service..." />
       </div>
 
-      <div className="px-5 py-4 border-t border-dark-border">
+      {/* Save Button (pinned bottom) */}
+      <div className="flex-shrink-0 px-5 py-4 border-t border-dark-border bg-dark-bg z-10">
         <button
+          type="button"
           onClick={handleSave}
           disabled={saving || !vehicleId || !odometer}
           className="w-full flex items-center justify-center gap-2 bg-accent text-white py-3.5 rounded-2xl font-semibold text-sm shadow-lg shadow-accent/25 active:scale-[0.98] transition-transform disabled:opacity-50"

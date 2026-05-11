@@ -31,9 +31,9 @@ export default function LoginScreen() {
   }
 
   return (
-    <div className="min-h-screen bg-dark-bg flex flex-col px-6 py-8 relative overflow-hidden">
+    <div className="min-h-screen bg-dark-bg flex flex-col px-6 py-8 relative">
       {/* Background */}
-      <div className="absolute -top-32 -right-32 w-64 h-64 bg-accent/5 rounded-full blur-3xl" />
+      <div className="absolute -top-32 -right-32 w-64 h-64 bg-accent/5 rounded-full blur-3xl pointer-events-none" />
 
       {/* Back button */}
       <button onClick={() => navigate('/')} className="w-10 h-10 rounded-xl bg-dark-card border border-dark-border flex items-center justify-center mb-8">

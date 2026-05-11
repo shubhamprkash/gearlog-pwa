@@ -35,8 +35,8 @@ export default function SignupScreen() {
   }
 
   return (
-    <div className="min-h-screen bg-dark-bg flex flex-col px-6 py-8 relative overflow-hidden">
-      <div className="absolute -top-32 -left-32 w-64 h-64 bg-accent/5 rounded-full blur-3xl" />
+    <div className="min-h-screen bg-dark-bg flex flex-col px-6 py-8 relative">
+      <div className="absolute -top-32 -left-32 w-64 h-64 bg-accent/5 rounded-full blur-3xl pointer-events-none" />
 
       <button onClick={() => navigate('/')} className="w-10 h-10 rounded-xl bg-dark-card border border-dark-border flex items-center justify-center mb-8">
         <ArrowLeft className="w-5 h-5 text-primary" />
