@@ -57,7 +57,7 @@ export function StoreProvider({ children }) {
 
   const signIn = async (email, pw) => { const { error } = await supabase.auth.signInWithPassword({ email, password: pw }); if(error) throw error }
   const signUp = async (email, pw, name) => { const { error } = await supabase.auth.signUp({ email, password: pw, options: { data: { full_name: name } } }); if(error) throw error }
-  const signInGoogle = async () => { const { error } = await supabase.auth.signInWithOAuth({ provider:'google', options:{ redirectTo: window.location.origin } }); if(error) throw error }
+  const signInGoogle = async () => { const { error } = await supabase.auth.signInWithOAuth({ provider:'google', options:{ redirectTo: `${window.location.origin}/` } }); if(error) throw error }
   const signOut = async () => { if(isDemo){ setUser(null); setProfile(null); setIsDemo(false); setVehicles([]); return } await supabase.auth.signOut() }
 
   function loginDemo() {
