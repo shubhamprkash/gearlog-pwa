@@ -48,15 +48,19 @@ export function Select({ label, children, ...props }) {
   )
 }
 
-// ─── TOGGLE PILLS ──────────────────────────────
+// ─── TOGGLE PILLS (wraps on overflow) ──────────
 export function Pills({ label, options, value, onChange }) {
   return (
     <div className="space-y-1">
       {label && <label className="text-caps text-[#64748b]">{label}</label>}
-      <div className="flex gap-1 bg-[#0f172a] rounded-xl p-1 border border-[#334155]">
+      <div className="flex flex-wrap gap-1 bg-[#0f172a] rounded-xl p-1 border border-[#334155]">
         {options.map(o => (
           <button key={o.value} type="button" onClick={() => onChange(o.value)}
-            className={`flex-1 py-2 px-2 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${value === o.value ? 'bg-[#f97316] text-white shadow' : 'text-[#64748b]'}`}>
+            className={`flex-1 min-w-0 basis-0 py-2 px-1.5 rounded-lg text-[11px] font-semibold transition-all text-center ${
+              value === o.value ? 'bg-[#f97316] text-white shadow' : 'text-[#64748b]'
+            }`}
+            style={{ minWidth: `${Math.max(100 / options.length - 2, 20)}%` }}
+          >
             {o.label}
           </button>
         ))}

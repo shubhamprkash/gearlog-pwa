@@ -7,10 +7,12 @@ import {
   Mail,
   Car,
   Bike,
-  Edit,
+  Pencil,
   Trash2,
   LogOut,
   Plus,
+  Settings,
+  Edit,
   X,
   Save,
   ExternalLink,
@@ -85,12 +87,15 @@ export default function Profile() {
 
   return (
     <ScrollPage>
+      {/* ── Header ── */}
       <div className="px-5 pt-6 pb-4">
         <h1 className="text-xl font-bold text-[#f1f5f9]">Profile</h1>
       </div>
 
+      {/* ── Profile Card ── */}
       <div className="px-5 mb-6">
         <Card className="p-5 flex items-center gap-4">
+          {/* Avatar: shows image if available, else icon */}
           <div className="w-14 h-14 rounded-2xl bg-[#f97316]/10 border-2 border-[#f97316]/30 flex items-center justify-center overflow-hidden">
             {profile?.avatar_url ? (
               <img
@@ -107,13 +112,13 @@ export default function Profile() {
             <h2 className="text-base font-bold text-[#f1f5f9] truncate">
               {profile?.full_name || 'User'}
             </h2>
-
             <p className="text-[10px] text-[#64748b] flex items-center gap-1 truncate">
               <Mail className="w-3 h-3 shrink-0" />
               {user?.email || 'demo@gearlog.app'}
             </p>
           </div>
 
+          {/* Edit profile button (from old) */}
           <button
             onClick={openEditProfile}
             className="w-9 h-9 rounded-xl bg-[#f97316]/10 border border-[#f97316]/20 flex items-center justify-center active:scale-90 transition"
@@ -124,6 +129,7 @@ export default function Profile() {
         </Card>
       </div>
 
+      {/* ── Vehicles ── */}
       <div className="px-5 mb-6">
         <div className="flex items-center justify-between mb-2">
           <p className="text-caps text-[#64748b]">MY VEHICLES</p>
@@ -153,22 +159,43 @@ export default function Profile() {
                 </p>
               </div>
 
+              {/* View Dashboard button (new: Settings icon) */}
               <button
                 onClick={() => {
                   setActiveVehicleId(v.id)
                   nav('/dashboard')
                 }}
                 className="w-7 h-7 rounded-lg bg-[#0f172a] border border-[#334155] flex items-center justify-center active:scale-90 transition"
-                aria-label="Open vehicle"
+                title="View Dashboard"
+                aria-label="View Dashboard"
               >
-                <Edit className="w-3 h-3 text-[#64748b]" />
+                <Settings className="w-3 h-3 text-[#64748b]" />
               </button>
 
+              {/* Edit vehicle button (new) */}
+              <button
+                onClick={() =>
+                  nav('/add-vehicle', { state: { editVehicle: v } })
+                }
+                className="w-7 h-7 rounded-lg bg-[#f97316]/10 border border-[#f97316]/20 flex items-center justify-center active:scale-90 transition"
+                title="Edit Vehicle"
+                aria-label="Edit Vehicle"
+              >
+                <Pencil className="w-3 h-3 text-[#f97316]" />
+              </button>
+
+              {/* Delete vehicle button */}
               <button
                 onClick={() => {
-                  if (confirm('Delete ' + v.nickname + '?')) deleteVehicle(v.id)
+                  if (
+                    confirm(
+                      'Delete ' + v.nickname + '? All logs will be lost.'
+                    )
+                  )
+                    deleteVehicle(v.id)
                 }}
                 className="w-7 h-7 rounded-lg bg-[#ef4444]/10 border border-[#ef4444]/20 flex items-center justify-center active:scale-90 transition"
+                title="Delete Vehicle"
                 aria-label="Delete vehicle"
               >
                 <Trash2 className="w-3 h-3 text-[#ef4444]" />
@@ -187,19 +214,20 @@ export default function Profile() {
         </div>
       </div>
 
+      {/* ── Version ── */}
       <div className="px-5 mb-6">
         <Card className="p-4 flex items-center justify-between">
           <span className="text-sm text-[#64748b]">Version</span>
-          <span className="text-xs text-[#64748b]/60">GearLog v3.0</span>
+          <span className="text-xs text-[#64748b]/60">GearLog v3.1</span>
         </Card>
       </div>
 
+      {/* ── Credits (from old) ── */}
       <div className="px-5 mb-6">
         <Card className="p-4 text-center">
           <p className="text-xs text-[#64748b]">
             © 2026, Shubham Web Studios (SWS)
           </p>
-
           <a
             href="https://www.linkedin.com/in/shubhamprkash/"
             target="_blank"
@@ -212,6 +240,7 @@ export default function Profile() {
         </Card>
       </div>
 
+      {/* ── Logout Button ── */}
       <div className="px-5 pb-8">
         <button
           onClick={() => setShowLogout(true)}
@@ -222,6 +251,7 @@ export default function Profile() {
         </button>
       </div>
 
+      {/* ── Edit Profile Modal (from old) ── */}
       {showEditProfile && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-6">
           <Card className="p-6 w-full max-w-sm">
@@ -229,7 +259,6 @@ export default function Profile() {
               <h3 className="text-lg font-bold text-[#f1f5f9]">
                 Edit Profile
               </h3>
-
               <button
                 type="button"
                 onClick={() => setShowEditProfile(false)}
@@ -245,7 +274,6 @@ export default function Profile() {
                 <label className="block text-[10px] font-semibold text-[#64748b] mb-1.5 uppercase tracking-wider">
                   Full Name
                 </label>
-
                 <input
                   type="text"
                   value={profileForm.full_name}
@@ -264,7 +292,6 @@ export default function Profile() {
                 <label className="block text-[10px] font-semibold text-[#64748b] mb-1.5 uppercase tracking-wider">
                   Avatar URL
                 </label>
-
                 <input
                   type="url"
                   value={profileForm.avatar_url}
@@ -277,7 +304,6 @@ export default function Profile() {
                   placeholder="https://example.com/avatar.jpg"
                   className="w-full bg-[#0f172a] border border-[#334155] rounded-xl px-4 py-3 text-sm text-[#f1f5f9] placeholder:text-[#475569] outline-none focus:border-[#f97316] transition"
                 />
-
                 <p className="mt-1.5 text-[10px] text-[#64748b]">
                   Optional. Paste a direct image URL.
                 </p>
@@ -297,7 +323,6 @@ export default function Profile() {
                 >
                   Cancel
                 </button>
-
                 <button
                   type="submit"
                   disabled={savingProfile}
@@ -312,17 +337,16 @@ export default function Profile() {
         </div>
       )}
 
+      {/* ── Logout Confirm Modal ── */}
       {showLogout && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-6">
           <Card className="p-6 w-full max-w-sm">
             <h3 className="text-lg font-bold text-[#f1f5f9] mb-2">
               Logout?
             </h3>
-
             <p className="text-sm text-[#64748b] mb-6">
               Are you sure you want to sign out?
             </p>
-
             <div className="flex gap-3">
               <button
                 onClick={() => setShowLogout(false)}
@@ -330,7 +354,6 @@ export default function Profile() {
               >
                 Cancel
               </button>
-
               <button
                 onClick={handleLogout}
                 className="flex-1 py-3 bg-[#ef4444] text-white rounded-xl text-sm font-semibold"
