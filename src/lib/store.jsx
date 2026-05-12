@@ -2,7 +2,6 @@
  * GLOBAL STATE — React Context based store
  * Vehicle-first architecture: everything revolves around the active vehicle
  */
-
 import React, {
   createContext,
   useContext,
@@ -11,7 +10,6 @@ import React, {
   useCallback,
   useMemo,
 } from 'react'
-
 import { supabase } from './supabase'
 import {
   demoUser,
@@ -20,7 +18,6 @@ import {
   demoServiceLogs,
   demoTrips,
 } from './demoData'
-
 import {
   calculateMileage,
   fuelAnalytics,
@@ -31,44 +28,40 @@ import {
 } from './smartCalc'
 
 const Ctx = createContext({})
-
 export const useStore = () => useContext(Ctx)
 
 export function StoreProvider({ children }) {
-  // Auth
+  // ─── AUTH STATE ───────────────────────────────
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
   const [isDemo, setIsDemo] = useState(false)
   const [authLoading, setAuthLoading] = useState(true)
 
-  // Data
+  // ─── DATA STATE ───────────────────────────────
   const [vehicles, setVehicles] = useState([])
   const [fuelLogs, setFuelLogs] = useState([])
   const [serviceLogs, setServiceLogs] = useState([])
   const [trips, setTrips] = useState([])
   const [dataLoading, setDataLoading] = useState(false)
 
-  // Active vehicle — the core of the UX
+  // ─── ACTIVE VEHICLE ───────────────────────────
   const [activeVehicleId, setActiveVehicleId] = useState(() => {
     return localStorage.getItem('gearlog_active_vehicle') || null
   })
 
-  // Persist active vehicle
   useEffect(() => {
     if (activeVehicleId) {
       localStorage.setItem('gearlog_active_vehicle', activeVehicleId)
     }
   }, [activeVehicleId])
 
-  // ─── AUTH ──────────────────────────────────────
+  // ─── AUTH INIT ────────────────────────────────
   useEffect(() => {
     handleOAuthCallback()
-
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       console.log('[Auth]', event, session?.user?.email)
-
       if (session?.user) {
         setUser(session.user)
         fetchProfile(session.user.id)
@@ -77,10 +70,8 @@ export function StoreProvider({ children }) {
         setUser(null)
         setProfile(null)
       }
-
       setAuthLoading(false)
     })
-
     return () => subscription?.unsubscribe()
   }, [])
 
@@ -93,20 +84,16 @@ export function StoreProvider({ children }) {
     try {
       // Hash fragment flow
       const hash = window.location.hash
-
       if (hash && hash.includes('access_token')) {
         const params = new URLSearchParams(hash.substring(1))
         const accessToken = params.get('access_token')
         const refreshToken = params.get('refresh_token')
-
         if (accessToken && refreshToken) {
           console.log('[Auth] Setting session from OAuth callback hash')
-
           const { data, error } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken,
           })
-
           if (error) {
             console.error('[Auth] Error setting session from hash:', error.message)
           } else if (data.session?.user) {
@@ -114,7 +101,6 @@ export function StoreProvider({ children }) {
             fetchProfile(data.session.user.id)
             setIsDemo(false)
           }
-
           window.history.replaceState(null, '', window.location.pathname)
           setAuthLoading(false)
           return
@@ -124,12 +110,9 @@ export function StoreProvider({ children }) {
       // PKCE query param flow
       const url = new URL(window.location.href)
       const code = url.searchParams.get('code')
-
       if (code) {
         console.log('[Auth] Exchanging code from OAuth callback')
-
         const { data, error } = await supabase.auth.exchangeCodeForSession(code)
-
         if (error) {
           console.error('[Auth] Error exchanging code:', error.message)
         } else if (data.session?.user) {
@@ -137,7 +120,6 @@ export function StoreProvider({ children }) {
           fetchProfile(data.session.user.id)
           setIsDemo(false)
         }
-
         url.searchParams.delete('code')
         window.history.replaceState(null, '', url.pathname)
         setAuthLoading(false)
@@ -148,7 +130,6 @@ export function StoreProvider({ children }) {
       const {
         data: { session },
       } = await supabase.auth.getSession()
-
       if (session?.user) {
         setUser(session.user)
         await fetchProfile(session.user.id)
@@ -157,10 +138,10 @@ export function StoreProvider({ children }) {
     } catch (e) {
       console.log('[Auth] Init error:', e.message)
     }
-
     setAuthLoading(false)
   }
 
+  // ─── PROFILE ──────────────────────────────────
   async function fetchProfile(uid) {
     try {
       const { data } = await supabase
@@ -168,7 +149,6 @@ export function StoreProvider({ children }) {
         .select('*')
         .eq('id', uid)
         .single()
-
       if (data) setProfile(data)
     } catch (e) {
       console.log('[Profile] Fetch error:', e.message)
@@ -182,20 +162,14 @@ export function StoreProvider({ children }) {
     }
 
     if (isDemo) {
-      const updatedProfile = {
-        ...(profile || {}),
-        ...cleanUpdates,
-      }
-
+      const updatedProfile = { ...(profile || {}), ...cleanUpdates }
       setProfile(updatedProfile)
       return updatedProfile
     }
 
-    if (!user?.id) {
-      throw new Error('User not authenticated')
-    }
+    if (!user?.id) throw new Error('User not authenticated')
 
-    // First try update existing profile row
+    // Try updating existing row first
     const { data, error } = await supabase
       .from('profiles')
       .update(cleanUpdates)
@@ -210,28 +184,24 @@ export function StoreProvider({ children }) {
       return data
     }
 
-    // Fallback: if profile row does not exist, create it
+    // Fallback: insert if row doesn't exist
     const { data: insertedProfile, error: insertError } = await supabase
       .from('profiles')
-      .insert({
-        id: user.id,
-        ...cleanUpdates,
-      })
+      .insert({ id: user.id, ...cleanUpdates })
       .select()
       .single()
 
     if (insertError) throw insertError
-
     setProfile(insertedProfile)
     return insertedProfile
   }
 
+  // ─── AUTH ACTIONS ─────────────────────────────
   const signIn = async (email, pw) => {
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password: pw,
     })
-
     if (error) throw error
   }
 
@@ -239,28 +209,18 @@ export function StoreProvider({ children }) {
     const { error } = await supabase.auth.signUp({
       email,
       password: pw,
-      options: {
-        data: {
-          full_name: name,
-        },
-      },
+      options: { data: { full_name: name } },
     })
-
     if (error) throw error
   }
 
   const signInGoogle = async () => {
     const redirectUrl = window.location.origin + '/dashboard'
-
     console.log('[Auth] Google OAuth redirect URL:', redirectUrl)
-
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: {
-        redirectTo: redirectUrl,
-      },
+      options: { redirectTo: redirectUrl },
     })
-
     if (error) throw error
   }
 
@@ -275,7 +235,6 @@ export function StoreProvider({ children }) {
       setTrips([])
       return
     }
-
     await supabase.auth.signOut()
   }
 
@@ -290,7 +249,6 @@ export function StoreProvider({ children }) {
     setFuelLogs(demoFuelLogs)
     setServiceLogs(demoServiceLogs)
     setTrips(demoTrips)
-
     if (!activeVehicleId || !demoVehicles.find((v) => v.id === activeVehicleId)) {
       setActiveVehicleId(demoVehicles[0]?.id || null)
     }
@@ -299,9 +257,7 @@ export function StoreProvider({ children }) {
   // ─── DATA LOADING ─────────────────────────────
   const loadData = useCallback(async () => {
     if (!user || isDemo) return
-
     setDataLoading(true)
-
     try {
       const [v, f, s, t] = await Promise.all([
         supabase
@@ -309,38 +265,32 @@ export function StoreProvider({ children }) {
           .select('*')
           .eq('user_id', user.id)
           .order('created_at'),
-
         supabase
           .from('fuel_logs')
           .select('*')
           .eq('user_id', user.id)
           .order('date', { ascending: false }),
-
         supabase
           .from('service_logs')
           .select('*')
           .eq('user_id', user.id)
           .order('date', { ascending: false }),
-
         supabase
           .from('trips')
           .select('*')
           .eq('user_id', user.id)
           .order('date', { ascending: false }),
       ])
-
       setVehicles(v.data || [])
       setFuelLogs(f.data || [])
       setServiceLogs(s.data || [])
       setTrips(t.data || [])
-
       if (!activeVehicleId && v.data?.length) {
         setActiveVehicleId(v.data[0].id)
       }
     } catch (e) {
       console.error(e)
     }
-
     setDataLoading(false)
   }, [user, isDemo, activeVehicleId])
 
@@ -351,45 +301,33 @@ export function StoreProvider({ children }) {
   // ─── VEHICLE CRUD ─────────────────────────────
   async function addVehicle(v) {
     if (isDemo) {
-      const nv = {
-        ...v,
-        id: `v${Date.now()}`,
-        user_id: user.id,
-      }
-
+      const nv = { ...v, id: `v${Date.now()}`, user_id: user.id }
       setVehicles((p) => [...p, nv])
       setActiveVehicleId(nv.id)
       return nv
     }
-
     const { data, error } = await supabase
       .from('vehicles')
-      .insert({
-        ...v,
-        user_id: user.id,
-      })
+      .insert({ ...v, user_id: user.id })
       .select()
       .single()
-
     if (error) throw error
-
     setVehicles((p) => [...p, data])
     setActiveVehicleId(data.id)
-
     return data
   }
 
-  async function updateVehicle(id, u) {
+  async function updateVehicle(id, updates) {
     if (isDemo) {
-      setVehicles((p) => p.map((v) => (v.id === id ? { ...v, ...u } : v)))
+      setVehicles((p) => p.map((v) => (v.id === id ? { ...v, ...updates } : v)))
       return
     }
-
-    const { error } = await supabase.from('vehicles').update(u).eq('id', id)
-
+    const { error } = await supabase
+      .from('vehicles')
+      .update(updates)
+      .eq('id', id)
     if (error) throw error
-
-    setVehicles((p) => p.map((v) => (v.id === id ? { ...v, ...u } : v)))
+    setVehicles((p) => p.map((v) => (v.id === id ? { ...v, ...updates } : v)))
   }
 
   async function deleteVehicle(id) {
@@ -398,20 +336,14 @@ export function StoreProvider({ children }) {
       setFuelLogs((p) => p.filter((f) => f.vehicle_id !== id))
       setServiceLogs((p) => p.filter((s) => s.vehicle_id !== id))
       setTrips((p) => p.filter((t) => t.vehicle_id !== id))
-
       if (activeVehicleId === id) {
         setActiveVehicleId(vehicles.find((v) => v.id !== id)?.id || null)
       }
-
       return
     }
-
     const { error } = await supabase.from('vehicles').delete().eq('id', id)
-
     if (error) throw error
-
     setVehicles((p) => p.filter((v) => v.id !== id))
-
     if (activeVehicleId === id) {
       setActiveVehicleId(vehicles.find((v) => v.id !== id)?.id || null)
     }
@@ -420,29 +352,33 @@ export function StoreProvider({ children }) {
   // ─── FUEL LOG CRUD ────────────────────────────
   async function addFuelLog(l) {
     if (isDemo) {
-      const n = {
-        ...l,
-        id: `f${Date.now()}`,
-        user_id: user.id,
-      }
-
+      const n = { ...l, id: `f${Date.now()}`, user_id: user.id }
       setFuelLogs((p) => [n, ...p])
       return n
     }
-
     const { data, error } = await supabase
       .from('fuel_logs')
-      .insert({
-        ...l,
-        user_id: user.id,
-      })
+      .insert({ ...l, user_id: user.id })
       .select()
       .single()
-
     if (error) throw error
-
     setFuelLogs((p) => [data, ...p])
     return data
+  }
+
+  async function updateFuelLog(id, updates) {
+    if (isDemo) {
+      setFuelLogs((p) =>
+        p.map((f) => (f.id === id ? { ...f, ...updates } : f))
+      )
+      return
+    }
+    const { error } = await supabase
+      .from('fuel_logs')
+      .update(updates)
+      .eq('id', id)
+    if (error) throw error
+    setFuelLogs((p) => p.map((f) => (f.id === id ? { ...f, ...updates } : f)))
   }
 
   async function deleteFuelLog(id) {
@@ -450,40 +386,56 @@ export function StoreProvider({ children }) {
       setFuelLogs((p) => p.filter((f) => f.id !== id))
       return
     }
-
     const { error } = await supabase.from('fuel_logs').delete().eq('id', id)
-
     if (error) throw error
-
     setFuelLogs((p) => p.filter((f) => f.id !== id))
   }
 
   // ─── SERVICE LOG CRUD ─────────────────────────
   async function addServiceLog(l) {
     if (isDemo) {
-      const n = {
-        ...l,
-        id: `s${Date.now()}`,
-        user_id: user.id,
-      }
-
+      const n = { ...l, id: `s${Date.now()}`, user_id: user.id }
       setServiceLogs((p) => [n, ...p])
       return n
     }
-
     const { data, error } = await supabase
       .from('service_logs')
-      .insert({
-        ...l,
-        user_id: user.id,
-      })
+      .insert({ ...l, user_id: user.id })
       .select()
       .single()
-
     if (error) throw error
-
     setServiceLogs((p) => [data, ...p])
     return data
+  }
+
+  async function updateServiceLog(id, updates) {
+    if (isDemo) {
+      setServiceLogs((p) =>
+        p.map((s) => (s.id === id ? { ...s, ...updates } : s))
+      )
+      return
+    }
+    const { error } = await supabase
+      .from('service_logs')
+      .update(updates)
+      .eq('id', id)
+    if (error) throw error
+    setServiceLogs((p) =>
+      p.map((s) => (s.id === id ? { ...s, ...updates } : s))
+    )
+  }
+
+  async function deleteServiceLog(id) {
+    if (isDemo) {
+      setServiceLogs((p) => p.filter((s) => s.id !== id))
+      return
+    }
+    const { error } = await supabase
+      .from('service_logs')
+      .delete()
+      .eq('id', id)
+    if (error) throw error
+    setServiceLogs((p) => p.filter((s) => s.id !== id))
   }
 
   // ─── TRIP CRUD ────────────────────────────────
@@ -495,56 +447,86 @@ export function StoreProvider({ children }) {
         user_id: user.id,
         distance: t.end_km - t.start_km,
       }
-
       setTrips((p) => [n, ...p])
       return n
     }
-
     const { data, error } = await supabase
       .from('trips')
-      .insert({
-        ...t,
-        user_id: user.id,
-      })
+      .insert({ ...t, user_id: user.id })
       .select()
       .single()
-
     if (error) throw error
-
     setTrips((p) => [data, ...p])
     return data
   }
 
+  async function updateTrip(id, updates) {
+    if (isDemo) {
+      setTrips((p) =>
+        p.map((t) =>
+          t.id === id
+            ? {
+                ...t,
+                ...updates,
+                distance:
+                  (updates.end_km ?? t.end_km) -
+                  (updates.start_km ?? t.start_km),
+              }
+            : t
+        )
+      )
+      return
+    }
+    const { error } = await supabase
+      .from('trips')
+      .update(updates)
+      .eq('id', id)
+    if (error) throw error
+    setTrips((p) => p.map((t) => (t.id === id ? { ...t, ...updates } : t)))
+  }
+
+  async function deleteTrip(id) {
+    if (isDemo) {
+      setTrips((p) => p.filter((t) => t.id !== id))
+      return
+    }
+    const { error } = await supabase.from('trips').delete().eq('id', id)
+    if (error) throw error
+    setTrips((p) => p.filter((t) => t.id !== id))
+  }
+
   // ─── COMPUTED: Active vehicle + smart data ────
-  const activeVehicle = useMemo(() => {
-    return vehicles.find((v) => v.id === activeVehicleId) || null
-  }, [vehicles, activeVehicleId])
+  const activeVehicle = useMemo(
+    () => vehicles.find((v) => v.id === activeVehicleId) || null,
+    [vehicles, activeVehicleId]
+  )
 
-  const vFuel = useMemo(() => {
-    return fuelLogs.filter((f) => f.vehicle_id === activeVehicleId)
-  }, [fuelLogs, activeVehicleId])
+  const vFuel = useMemo(
+    () => fuelLogs.filter((f) => f.vehicle_id === activeVehicleId),
+    [fuelLogs, activeVehicleId]
+  )
 
-  const vService = useMemo(() => {
-    return serviceLogs.filter((s) => s.vehicle_id === activeVehicleId)
-  }, [serviceLogs, activeVehicleId])
+  const vService = useMemo(
+    () => serviceLogs.filter((s) => s.vehicle_id === activeVehicleId),
+    [serviceLogs, activeVehicleId]
+  )
 
-  const vTrips = useMemo(() => {
-    return trips.filter((t) => t.vehicle_id === activeVehicleId)
-  }, [trips, activeVehicleId])
+  const vTrips = useMemo(
+    () => trips.filter((t) => t.vehicle_id === activeVehicleId),
+    [trips, activeVehicleId]
+  )
 
-  const mileage = useMemo(() => calculateMileage(vFuel), [vFuel])
-  const fuel = useMemo(() => fuelAnalytics(vFuel), [vFuel])
-
-  const parts = useMemo(() => {
-    return activeVehicle ? calculatePartHealth(activeVehicle, vService) : {}
-  }, [activeVehicle, vService])
-
-  const health = useMemo(() => calculateHealthScore(parts), [parts])
-
-  const reminders = useMemo(() => {
-    return activeVehicle ? getActiveReminders(parts, activeVehicle.nickname) : []
-  }, [parts, activeVehicle])
-
+  const mileage  = useMemo(() => calculateMileage(vFuel), [vFuel])
+  const fuel     = useMemo(() => fuelAnalytics(vFuel), [vFuel])
+  const parts    = useMemo(
+    () => (activeVehicle ? calculatePartHealth(activeVehicle, vService) : {}),
+    [activeVehicle, vService]
+  )
+  const health    = useMemo(() => calculateHealthScore(parts), [parts])
+  const reminders = useMemo(
+    () => (activeVehicle ? getActiveReminders(parts, activeVehicle.nickname) : []),
+    [parts, activeVehicle]
+  )
   const costKm = useMemo(() => costPerKm(vFuel, vService), [vFuel, vService])
 
   return (
@@ -563,20 +545,33 @@ export function StoreProvider({ children }) {
         fetchProfile,
         updateProfile,
 
-        // Data
+        // Data state
         vehicles,
         fuelLogs,
         serviceLogs,
         trips,
         dataLoading,
+        loadData,
+
+        // Vehicle CRUD
         addVehicle,
         updateVehicle,
         deleteVehicle,
+
+        // Fuel log CRUD
         addFuelLog,
+        updateFuelLog,   // ✅ new
         deleteFuelLog,
+
+        // Service log CRUD
         addServiceLog,
+        updateServiceLog, // ✅ new
+        deleteServiceLog, // ✅ new
+
+        // Trip CRUD
         addTrip,
-        loadData,
+        updateTrip,       // ✅ new
+        deleteTrip,       // ✅ new
 
         // Active vehicle
         activeVehicleId,

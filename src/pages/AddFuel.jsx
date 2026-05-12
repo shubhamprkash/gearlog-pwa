@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useStore } from '../lib/store'
 import { PageShell, Input, Card } from '../components/UI'
 import { ArrowLeft, Save, Gauge, Fuel, IndianRupee, Calendar } from 'lucide-react'
@@ -7,22 +7,27 @@ import { format } from 'date-fns'
 
 export default function AddFuel() {
   const nav = useNavigate()
-  const { activeVehicle, activeVehicleId, addFuelLog, updateVehicle, vFuel } = useStore()
-  const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'))
-  const [odo, setOdo] = useState('')
-  const [litres, setLitres] = useState('')
-  const [cost, setCost] = useState('')
-  const [fullTank, setFullTank] = useState(true)
-  const [station, setStation] = useState('')
+  const location = useLocation()
+  const { activeVehicle, activeVehicleId, addFuelLog, updateFuelLog, updateVehicle, vFuel } = useStore()
+
+  // Edit mode: pass existing log via location.state
+  const editing = location.state?.edit || null
+  const isEdit = !!editing
+
+  const [date, setDate] = useState(editing?.date || format(new Date(), 'yyyy-MM-dd'))
+  const [odo, setOdo] = useState(editing?.odometer?.toString() || '')
+  const [litres, setLitres] = useState(editing?.litres?.toString() || '')
+  const [cost, setCost] = useState(editing?.total_cost?.toString() || '')
+  const [fullTank, setFullTank] = useState(editing?.full_tank ?? true)
+  const [station, setStation] = useState(editing?.station_name || '')
   const [saving, setSaving] = useState(false)
 
   const costPerL = litres && cost ? (Number(cost) / Number(litres)).toFixed(1) : null
 
-  // Smart mileage from last fill-up
   const smartMileage = useMemo(() => {
     if (!odo || !litres) return null
-    const sorted = [...vFuel].filter(f => f.full_tank).sort((a, b) => b.odometer - a.odometer)
-    const last = sorted[0]
+    const sorted = [...vFuel].filter(f => f.full_tank && (!isEdit || f.id !== editing?.id)).sort((a, b) => b.odometer - a.odometer)
+    const last = sorted.find(f => f.odometer < Number(odo))
     if (!last) return null
     const dist = Number(odo) - last.odometer
     if (dist <= 0) return null
@@ -33,8 +38,12 @@ export default function AddFuel() {
     if (!odo || !litres || !cost) return
     setSaving(true)
     try {
-      await addFuelLog({ vehicle_id: activeVehicleId, date, odometer: Number(odo), litres: Number(litres), total_cost: Number(cost), full_tank: fullTank, station_name: station || null })
-      // Auto-update vehicle odometer if higher
+      const payload = { vehicle_id: activeVehicleId, date, odometer: Number(odo), litres: Number(litres), total_cost: Number(cost), full_tank: fullTank, station_name: station || null }
+      if (isEdit) {
+        await updateFuelLog(editing.id, payload)
+      } else {
+        await addFuelLog(payload)
+      }
       if (Number(odo) > (activeVehicle?.current_odometer || 0)) {
         await updateVehicle(activeVehicleId, { current_odometer: Number(odo) })
       }
@@ -45,8 +54,24 @@ export default function AddFuel() {
 
   return (
     <PageShell
-      header={<div className="px-5 pt-5 pb-3 border-b border-[#334155] bg-[#0f172a]"><div className="flex items-center gap-3"><button type="button" onClick={() => nav(-1)} className="w-9 h-9 rounded-xl bg-[#1e293b] border border-[#334155] flex items-center justify-center"><ArrowLeft className="w-4 h-4 text-[#f1f5f9]" /></button><div><h1 className="text-base font-bold text-[#f1f5f9]">Add Fuel Log</h1><p className="text-[10px] text-[#64748b]">{activeVehicle?.nickname || 'Select vehicle first'}</p></div></div></div>}
-      footer={<div className="px-5 py-4 border-t border-[#334155] bg-[#0f172a]"><button type="button" onClick={save} disabled={saving||!odo||!litres||!cost} className="w-full flex items-center justify-center gap-2 bg-[#f97316] text-white py-3.5 rounded-2xl font-semibold text-sm shadow-lg shadow-[#f97316]/25 active:scale-[0.97] transition disabled:opacity-40"><Save className="w-4 h-4"/>{saving?'Saving...':'Save Log'}</button></div>}
+      header={
+        <div className="px-5 pt-5 pb-3 border-b border-[#334155] bg-[#0f172a]">
+          <div className="flex items-center gap-3">
+            <button type="button" onClick={() => nav(-1)} className="w-9 h-9 rounded-xl bg-[#1e293b] border border-[#334155] flex items-center justify-center"><ArrowLeft className="w-4 h-4 text-[#f1f5f9]" /></button>
+            <div>
+              <h1 className="text-base font-bold text-[#f1f5f9]">{isEdit ? 'Edit Fuel Log' : 'Add Fuel Log'}</h1>
+              <p className="text-[10px] text-[#64748b]">{activeVehicle?.nickname || 'Select vehicle first'}</p>
+            </div>
+          </div>
+        </div>
+      }
+      footer={
+        <div className="px-5 py-4 border-t border-[#334155] bg-[#0f172a]">
+          <button type="button" onClick={save} disabled={saving||!odo||!litres||!cost} className="w-full flex items-center justify-center gap-2 bg-[#f97316] text-white py-3.5 rounded-2xl font-semibold text-sm shadow-lg shadow-[#f97316]/25 active:scale-[0.97] transition disabled:opacity-40">
+            <Save className="w-4 h-4"/>{saving ? 'Saving...' : isEdit ? 'Update Log' : 'Save Log'}
+          </button>
+        </div>
+      }
     >
       <div className="px-5 py-5 space-y-4">
         <Input label="DATE" value={date} onChange={e => setDate(e.target.value)} type="date" icon={Calendar} />

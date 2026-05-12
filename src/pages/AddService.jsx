@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useStore } from '../lib/store'
 import { PageShell, Input, Pills, ChipSelect, Textarea } from '../components/UI'
 import { ArrowLeft, Save, Calendar, Gauge, Wrench, IndianRupee } from 'lucide-react'
@@ -10,22 +10,34 @@ const PARTS = ['Engine Oil','Oil Filter','Air Filter','Spark Plug','Brake Pads',
 
 export default function AddService() {
   const nav = useNavigate()
-  const { activeVehicle, activeVehicleId, addServiceLog, updateVehicle } = useStore()
-  const [date, setDate] = useState(format(new Date(),'yyyy-MM-dd'))
-  const [odo, setOdo] = useState('')
-  const [type, setType] = useState('general')
-  const [parts, setParts] = useState([])
-  const [oilBrand, setOilBrand] = useState('')
-  const [oilGrade, setOilGrade] = useState('')
-  const [cost, setCost] = useState('')
-  const [workshop, setWorkshop] = useState(activeVehicle?.workshop_name || '')
-  const [notes, setNotes] = useState('')
+  const location = useLocation()
+  const { activeVehicle, activeVehicleId, addServiceLog, updateServiceLog, updateVehicle } = useStore()
+
+  const editing = location.state?.edit || null
+  const isEdit = !!editing
+
+  const [date, setDate] = useState(editing?.date || format(new Date(),'yyyy-MM-dd'))
+  const [odo, setOdo] = useState(editing?.odometer?.toString() || '')
+  const [type, setType] = useState(editing?.service_type || 'general')
+  const [parts, setParts] = useState(editing?.parts_changed || [])
+  const [oilBrand, setOilBrand] = useState(editing?.oil_brand || '')
+  const [oilGrade, setOilGrade] = useState(editing?.oil_grade || '')
+  const [cost, setCost] = useState(editing?.total_cost?.toString() || '')
+  const [workshop, setWorkshop] = useState(editing?.workshop_name || activeVehicle?.workshop_name || '')
+  const [notes, setNotes] = useState(editing?.notes || '')
   const [saving, setSaving] = useState(false)
 
   const save = async () => {
     if (!odo) return; setSaving(true)
     try {
-      await addServiceLog({ vehicle_id: activeVehicleId, date, odometer: Number(odo), service_type: type, parts_changed: parts.length ? parts : null, oil_brand: oilBrand||null, oil_grade: oilGrade||null, total_cost: cost?Number(cost):null, workshop_name: workshop||null, notes: notes||null })
+      const payload = { vehicle_id: activeVehicleId, date, odometer: Number(odo), service_type: type, parts_changed: parts.length?parts:null, oil_brand: oilBrand||null, oil_grade: oilGrade||null, total_cost: cost?Number(cost):null, workshop_name: workshop||null, notes: notes||null }
+
+      if (isEdit) {
+        await updateServiceLog(editing.id, payload)
+      } else {
+        await addServiceLog(payload)
+      }
+
       // Smart update vehicle records
       const updates = { current_odometer: Math.max(Number(odo), activeVehicle?.current_odometer||0) }
       if (type === 'oil_change' || parts.includes('Engine Oil')) { updates.last_oil_change_km = Number(odo); updates.last_oil_change_date = date; if(oilBrand) updates.oil_brand = oilBrand; if(oilGrade) updates.oil_grade = oilGrade }
@@ -44,8 +56,24 @@ export default function AddService() {
 
   return (
     <PageShell
-      header={<div className="px-5 pt-5 pb-3 border-b border-[#334155] bg-[#0f172a]"><div className="flex items-center gap-3"><button type="button" onClick={()=>nav(-1)} className="w-9 h-9 rounded-xl bg-[#1e293b] border border-[#334155] flex items-center justify-center"><ArrowLeft className="w-4 h-4 text-[#f1f5f9]"/></button><div><h1 className="text-base font-bold text-[#f1f5f9]">Add Service Log</h1><p className="text-[10px] text-[#64748b]">{activeVehicle?.nickname||''}</p></div></div></div>}
-      footer={<div className="px-5 py-4 border-t border-[#334155] bg-[#0f172a]"><button type="button" onClick={save} disabled={saving||!odo} className="w-full flex items-center justify-center gap-2 bg-[#f97316] text-white py-3.5 rounded-2xl font-semibold text-sm shadow-lg shadow-[#f97316]/25 active:scale-[0.97] transition disabled:opacity-40"><Save className="w-4 h-4"/>{saving?'Saving...':'Save Service'}</button></div>}
+      header={
+        <div className="px-5 pt-5 pb-3 border-b border-[#334155] bg-[#0f172a]">
+          <div className="flex items-center gap-3">
+            <button type="button" onClick={()=>nav(-1)} className="w-9 h-9 rounded-xl bg-[#1e293b] border border-[#334155] flex items-center justify-center"><ArrowLeft className="w-4 h-4 text-[#f1f5f9]"/></button>
+            <div>
+              <h1 className="text-base font-bold text-[#f1f5f9]">{isEdit ? 'Edit Service Log' : 'Add Service Log'}</h1>
+              <p className="text-[10px] text-[#64748b]">{activeVehicle?.nickname||''}</p>
+            </div>
+          </div>
+        </div>
+      }
+      footer={
+        <div className="px-5 py-4 border-t border-[#334155] bg-[#0f172a]">
+          <button type="button" onClick={save} disabled={saving||!odo} className="w-full flex items-center justify-center gap-2 bg-[#f97316] text-white py-3.5 rounded-2xl font-semibold text-sm shadow-lg shadow-[#f97316]/25 active:scale-[0.97] transition disabled:opacity-40">
+            <Save className="w-4 h-4"/>{saving ? 'Saving...' : isEdit ? 'Update Service' : 'Save Service'}
+          </button>
+        </div>
+      }
     >
       <div className="px-5 py-5 space-y-4">
         <Input label="DATE" value={date} onChange={e=>setDate(e.target.value)} type="date" icon={Calendar} />
@@ -56,7 +84,7 @@ export default function AddService() {
         <Input label="WORKSHOP" value={workshop} onChange={e=>setWorkshop(e.target.value)} placeholder="Service center name" icon={Wrench} />
         <Input label="TOTAL COST" value={cost} onChange={e=>setCost(e.target.value)} type="number" suffix="₹" icon={IndianRupee} />
         <Textarea label="NOTES" value={notes} onChange={e=>setNotes(e.target.value)} placeholder="Any notes..." />
-        {parts.length > 0 && (
+        {parts.length > 0 && !isEdit && (
           <div className="bg-[#22c55e]/5 border border-[#22c55e]/20 rounded-xl p-3">
             <p className="text-[10px] text-[#22c55e] font-semibold">✓ Part trackers will auto-reset: {parts.join(', ')}</p>
           </div>

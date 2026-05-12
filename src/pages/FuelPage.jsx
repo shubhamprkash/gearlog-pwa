@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useStore } from '../lib/store'
 import { Card, ScrollPage, Empty } from '../components/UI'
 import VehiclePicker from '../components/VehiclePicker'
-import { Fuel, Plus, Calendar, Trash2 } from 'lucide-react'
+import { Fuel, Plus, Calendar, Trash2, Pencil } from 'lucide-react'
 import { format } from 'date-fns'
 
 export default function FuelPage() {
@@ -17,7 +17,6 @@ export default function FuelPage() {
         <VehiclePicker onAddVehicle={() => nav('/add-vehicle')} />
       </div>
 
-      {/* Stats row */}
       {activeVehicle && (
         <div className="px-5 mb-4">
           <div className="grid grid-cols-3 gap-2">
@@ -42,8 +41,7 @@ export default function FuelPage() {
           <Empty icon={Fuel} title="No fuel logs" message="Add your first fill-up to start tracking mileage" action={() => nav('/add-fuel')} actionLabel="Add Fuel Log" />
         ) : (
           <div className="space-y-2">
-            {vFuel.map((f, i) => {
-              // Calculate mileage for this entry
+            {vFuel.map(f => {
               const sorted = [...vFuel].sort((a, b) => a.odometer - b.odometer)
               const idx = sorted.findIndex(x => x.id === f.id)
               let km_l = null
@@ -70,7 +68,22 @@ export default function FuelPage() {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-[9px] text-[#64748b]">{f.station_name || ''} {f.full_tank ? '• Full tank' : ''}</span>
-                    <button onClick={() => { if (confirm('Delete this entry?')) deleteFuelLog(f.id) }} className="text-[#64748b] hover:text-[#ef4444] transition p-1"><Trash2 className="w-3.5 h-3.5" /></button>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => nav('/add-fuel', { state: { edit: f } })}
+                        className="text-[#64748b] hover:text-[#f97316] transition p-1.5 rounded-lg hover:bg-[#f97316]/10 active:scale-90"
+                        title="Edit"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => { if (confirm('Delete this fuel entry?')) deleteFuelLog(f.id) }}
+                        className="text-[#64748b] hover:text-[#ef4444] transition p-1.5 rounded-lg hover:bg-[#ef4444]/10 active:scale-90"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
                 </Card>
               )
@@ -79,7 +92,6 @@ export default function FuelPage() {
         )}
       </div>
 
-      {/* FAB */}
       <button onClick={() => nav('/add-fuel')} className="fixed bottom-20 right-5 w-14 h-14 rounded-full bg-[#f97316] flex items-center justify-center shadow-lg shadow-[#f97316]/30 pulse-ring z-40 active:scale-90 transition">
         <Plus className="w-6 h-6 text-white" />
       </button>

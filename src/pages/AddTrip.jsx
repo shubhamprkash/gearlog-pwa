@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useStore } from '../lib/store'
 import { PageShell, Input, Pills, Textarea, Card } from '../components/UI'
 import { ArrowLeft, Save, Calendar, MapPin, Flag } from 'lucide-react'
@@ -7,12 +7,19 @@ import { format } from 'date-fns'
 
 export default function AddTrip() {
   const nav = useNavigate()
-  const { activeVehicle, activeVehicleId, addTrip, updateVehicle } = useStore()
-  const [date, setDate] = useState(format(new Date(),'yyyy-MM-dd'))
-  const [from, setFrom] = useState(''); const [to, setTo] = useState('')
-  const [startKm, setStartKm] = useState(''); const [endKm, setEndKm] = useState('')
-  const [purpose, setPurpose] = useState('personal')
-  const [notes, setNotes] = useState('')
+  const location = useLocation()
+  const { activeVehicle, activeVehicleId, addTrip, updateTrip, updateVehicle } = useStore()
+
+  const editing = location.state?.edit || null
+  const isEdit = !!editing
+
+  const [date, setDate] = useState(editing?.date || format(new Date(),'yyyy-MM-dd'))
+  const [from, setFrom] = useState(editing?.from_location || '')
+  const [to, setTo] = useState(editing?.to_location || '')
+  const [startKm, setStartKm] = useState(editing?.start_km?.toString() || '')
+  const [endKm, setEndKm] = useState(editing?.end_km?.toString() || '')
+  const [purpose, setPurpose] = useState(editing?.purpose || 'personal')
+  const [notes, setNotes] = useState(editing?.notes || '')
   const [saving, setSaving] = useState(false)
 
   const dist = useMemo(() => { const d = Number(endKm) - Number(startKm); return d > 0 ? d : null }, [startKm, endKm])
@@ -20,7 +27,12 @@ export default function AddTrip() {
   const save = async () => {
     if (!startKm || !endKm) return; setSaving(true)
     try {
-      await addTrip({ vehicle_id: activeVehicleId, date, from_location: from||null, to_location: to||null, start_km: Number(startKm), end_km: Number(endKm), purpose, notes: notes||null })
+      const payload = { vehicle_id: activeVehicleId, date, from_location: from||null, to_location: to||null, start_km: Number(startKm), end_km: Number(endKm), purpose, notes: notes||null }
+      if (isEdit) {
+        await updateTrip(editing.id, payload)
+      } else {
+        await addTrip(payload)
+      }
       if (Number(endKm) > (activeVehicle?.current_odometer||0)) await updateVehicle(activeVehicleId, { current_odometer: Number(endKm) })
       nav(-1)
     } catch(e) { alert(e.message) }
@@ -29,8 +41,24 @@ export default function AddTrip() {
 
   return (
     <PageShell
-      header={<div className="px-5 pt-5 pb-3 border-b border-[#334155] bg-[#0f172a]"><div className="flex items-center gap-3"><button type="button" onClick={()=>nav(-1)} className="w-9 h-9 rounded-xl bg-[#1e293b] border border-[#334155] flex items-center justify-center"><ArrowLeft className="w-4 h-4 text-[#f1f5f9]"/></button><div><h1 className="text-base font-bold text-[#f1f5f9]">Add Trip</h1><p className="text-[10px] text-[#64748b]">{activeVehicle?.nickname||''}</p></div></div></div>}
-      footer={<div className="px-5 py-4 border-t border-[#334155] bg-[#0f172a]"><button type="button" onClick={save} disabled={saving||!startKm||!endKm} className="w-full flex items-center justify-center gap-2 bg-[#f97316] text-white py-3.5 rounded-2xl font-semibold text-sm shadow-lg shadow-[#f97316]/25 active:scale-[0.97] transition disabled:opacity-40"><Save className="w-4 h-4"/>{saving?'Saving...':'Save Trip'}</button></div>}
+      header={
+        <div className="px-5 pt-5 pb-3 border-b border-[#334155] bg-[#0f172a]">
+          <div className="flex items-center gap-3">
+            <button type="button" onClick={()=>nav(-1)} className="w-9 h-9 rounded-xl bg-[#1e293b] border border-[#334155] flex items-center justify-center"><ArrowLeft className="w-4 h-4 text-[#f1f5f9]"/></button>
+            <div>
+              <h1 className="text-base font-bold text-[#f1f5f9]">{isEdit ? 'Edit Trip' : 'Add Trip'}</h1>
+              <p className="text-[10px] text-[#64748b]">{activeVehicle?.nickname||''}</p>
+            </div>
+          </div>
+        </div>
+      }
+      footer={
+        <div className="px-5 py-4 border-t border-[#334155] bg-[#0f172a]">
+          <button type="button" onClick={save} disabled={saving||!startKm||!endKm} className="w-full flex items-center justify-center gap-2 bg-[#f97316] text-white py-3.5 rounded-2xl font-semibold text-sm shadow-lg shadow-[#f97316]/25 active:scale-[0.97] transition disabled:opacity-40">
+            <Save className="w-4 h-4"/>{saving ? 'Saving...' : isEdit ? 'Update Trip' : 'Save Trip'}
+          </button>
+        </div>
+      }
     >
       <div className="px-5 py-5 space-y-4">
         <Input label="DATE" value={date} onChange={e=>setDate(e.target.value)} type="date" icon={Calendar} />
