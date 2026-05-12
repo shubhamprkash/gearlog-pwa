@@ -34,36 +34,148 @@ export function StoreProvider({ children }) {
 
   // ─── AUTH ──────────────────────────────────────
   useEffect(() => {
-    checkAuth()
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
-      if (session?.user) { setUser(session.user); fetchProfile(session.user.id); setIsDemo(false) }
-      else { setUser(null); setProfile(null) }
+    handleOAuthCallback()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('[Auth]', event, session?.user?.email)
+      if (session?.user) {
+        setUser(session.user)
+        fetchProfile(session.user.id)
+        setIsDemo(false)
+      } else {
+        setUser(null)
+        setProfile(null)
+      }
       setAuthLoading(false)
     })
     return () => subscription?.unsubscribe()
   }, [])
 
-  async function checkAuth() {
+  /**
+   * Handle OAuth callback — Supabase returns tokens in URL hash fragment
+   * e.g. https://yourapp.com/#access_token=...&refresh_token=...
+   * OR in query params for PKCE flow
+   * We need to extract these and set the session
+   */
+  async function handleOAuthCallback() {
     try {
+      // Check if URL has hash fragment with access_token (implicit flow)
+      const hash = window.location.hash
+      if (hash && hash.includes('access_token')) {
+        // Parse the hash
+        const params = new URLSearchParams(hash.substring(1))
+        const accessToken = params.get('access_token')
+        const refreshToken = params.get('refresh_token')
+
+        if (accessToken && refreshToken) {
+          console.log('[Auth] Setting session from OAuth callback hash')
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          })
+          if (error) {
+            console.error('[Auth] Error setting session from hash:', error.message)
+          } else if (data.session?.user) {
+            setUser(data.session.user)
+            fetchProfile(data.session.user.id)
+            setIsDemo(false)
+          }
+          // Clean the URL — remove hash fragment so it doesn't linger
+          window.history.replaceState(null, '', window.location.pathname)
+          setAuthLoading(false)
+          return
+        }
+      }
+
+      // Check for code in query params (PKCE flow)
+      const url = new URL(window.location.href)
+      const code = url.searchParams.get('code')
+      if (code) {
+        console.log('[Auth] Exchanging code from OAuth callback')
+        const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+        if (error) {
+          console.error('[Auth] Error exchanging code:', error.message)
+        } else if (data.session?.user) {
+          setUser(data.session.user)
+          fetchProfile(data.session.user.id)
+          setIsDemo(false)
+        }
+        // Clean URL
+        url.searchParams.delete('code')
+        window.history.replaceState(null, '', url.pathname)
+        setAuthLoading(false)
+        return
+      }
+
+      // No OAuth callback — just check existing session
       const { data: { session } } = await supabase.auth.getSession()
-      if (session?.user) { setUser(session.user); await fetchProfile(session.user.id); setIsDemo(false) }
-    } catch(e) { console.log('No auth') }
+      if (session?.user) {
+        setUser(session.user)
+        await fetchProfile(session.user.id)
+        setIsDemo(false)
+      }
+    } catch (e) {
+      console.log('[Auth] Init error:', e.message)
+    }
     setAuthLoading(false)
   }
 
   async function fetchProfile(uid) {
-    try { const { data } = await supabase.from('profiles').select('*').eq('id', uid).single(); if(data) setProfile(data) } catch(e) {}
+    try {
+      const { data } = await supabase.from('profiles').select('*').eq('id', uid).single()
+      if (data) setProfile(data)
+    } catch (e) {}
   }
 
-  const signIn = async (email, pw) => { const { error } = await supabase.auth.signInWithPassword({ email, password: pw }); if(error) throw error }
-  const signUp = async (email, pw, name) => { const { error } = await supabase.auth.signUp({ email, password: pw, options: { data: { full_name: name } } }); if(error) throw error }
-  const signInGoogle = async () => { const { error } = await supabase.auth.signInWithOAuth({ provider:'google', options:{ redirectTo: `${window.location.origin}/` } }); if(error) throw error }
-  const signOut = async () => { if(isDemo){ setUser(null); setProfile(null); setIsDemo(false); setVehicles([]); return } await supabase.auth.signOut() }
+  const signIn = async (email, pw) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password: pw })
+    if (error) throw error
+  }
+
+  const signUp = async (email, pw, name) => {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password: pw,
+      options: { data: { full_name: name } }
+    })
+    if (error) throw error
+  }
+
+  const signInGoogle = async () => {
+    // Use the current origin as redirect — works for both localhost and production
+    const redirectUrl = window.location.origin + '/dashboard'
+    console.log('[Auth] Google OAuth redirect URL:', redirectUrl)
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: redirectUrl,
+      }
+    })
+    if (error) throw error
+  }
+
+  const signOut = async () => {
+    if (isDemo) {
+      setUser(null)
+      setProfile(null)
+      setIsDemo(false)
+      setVehicles([])
+      return
+    }
+    await supabase.auth.signOut()
+  }
 
   function loginDemo() {
-    setUser(demoUser); setProfile({ full_name: demoUser.full_name }); setIsDemo(true)
-    setVehicles(demoVehicles); setFuelLogs(demoFuelLogs); setServiceLogs(demoServiceLogs); setTrips(demoTrips)
-    if (!activeVehicleId || !demoVehicles.find(v => v.id === activeVehicleId)) setActiveVehicleId(demoVehicles[0]?.id || null)
+    setUser(demoUser)
+    setProfile({ full_name: demoUser.full_name })
+    setIsDemo(true)
+    setVehicles(demoVehicles)
+    setFuelLogs(demoFuelLogs)
+    setServiceLogs(demoServiceLogs)
+    setTrips(demoTrips)
+    if (!activeVehicleId || !demoVehicles.find(v => v.id === activeVehicleId))
+      setActiveVehicleId(demoVehicles[0]?.id || null)
   }
 
   // ─── DATA LOADING ─────────────────────────────
@@ -77,14 +189,21 @@ export function StoreProvider({ children }) {
         supabase.from('service_logs').select('*').eq('user_id', user.id).order('date', { ascending: false }),
         supabase.from('trips').select('*').eq('user_id', user.id).order('date', { ascending: false }),
       ])
-      setVehicles(v.data || []); setFuelLogs(f.data || []); setServiceLogs(s.data || []); setTrips(t.data || [])
+      setVehicles(v.data || [])
+      setFuelLogs(f.data || [])
+      setServiceLogs(s.data || [])
+      setTrips(t.data || [])
       // Auto-select first vehicle if none selected
       if (!activeVehicleId && v.data?.length) setActiveVehicleId(v.data[0].id)
-    } catch(e) { console.error(e) }
+    } catch (e) {
+      console.error(e)
+    }
     setDataLoading(false)
   }, [user, isDemo])
 
-  useEffect(() => { if (user && !isDemo) loadData() }, [user, isDemo, loadData])
+  useEffect(() => {
+    if (user && !isDemo) loadData()
+  }, [user, isDemo, loadData])
 
   // ─── VEHICLE CRUD ─────────────────────────────
   async function addVehicle(v) {
