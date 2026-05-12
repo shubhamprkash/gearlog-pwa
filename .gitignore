@@ -5,3 +5,4 @@ dist
 *.log
 .env.pass
 SETUP_GUIDE.md
+PROJECT_CONTEXT.md
